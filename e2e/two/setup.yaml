@@ -1,0 +1,29 @@
+appId: com.chatnet
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: .*ChatNET.*
+    timeout: 90000
+- tapOn:
+    id: settings-button
+- tapOn:
+    id: username-input
+- eraseText: 20
+- inputText: ${NAME}
+# Swipes start at screen centre, which would otherwise land on the keyboard
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: target-ip-input
+    direction: DOWN
+    timeout: 20000
+    centerElement: true
+- tapOn:
+    id: target-ip-input
+- inputText: 10.0.2.2
+- tapOn:
+    id: save-settings
+- waitForAnimationToEnd

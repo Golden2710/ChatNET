@@ -1,0 +1,6 @@
+appId: com.chatnet
+---
+- extendedWaitUntil:
+    visible: .*\.(jpg|jpeg)
+    timeout: 60000
+- takeScreenshot: image-received

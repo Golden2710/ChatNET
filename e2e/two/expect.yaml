@@ -1,0 +1,9 @@
+appId: com.chatnet
+---
+- extendedWaitUntil:
+    visible:
+      id: message-text-other
+      text: ${TEXT}
+    timeout: 30000
+- assertVisible: ${FROM}
+- takeScreenshot: received

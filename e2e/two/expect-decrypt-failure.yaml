@@ -1,0 +1,7 @@
+appId: com.chatnet
+---
+- extendedWaitUntil:
+    visible: .*Không giải mã được.*
+    timeout: 30000
+- assertNotVisible: ${TEXT}
+- takeScreenshot: wrong-key

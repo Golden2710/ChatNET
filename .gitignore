@@ -1,0 +1,30 @@
+# dependencies
+node_modules/
+
+# Android / Gradle
+android/.gradle/
+android/build/
+android/app/build/
+android/app/.cxx/
+android/local.properties
+*.apk
+*.aab
+# release keystores (debug.keystore is the standard public RN debug key and is kept)
+*.keystore
+!android/app/debug.keystore
+
+# iOS
+ios/Pods/
+ios/build/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+
+# Metro / Jest / misc
+.metro-health-check*
+coverage/
+e2e-output/
+*.log
+.DS_Store
+.idea/
+.vscode/
+.e2e-tmp/

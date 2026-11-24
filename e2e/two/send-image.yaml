@@ -1,0 +1,13 @@
+appId: com.chatnet
+---
+- tapOn:
+    id: attach-button
+- extendedWaitUntil:
+    visible: .*[Pp]hoto taken.*
+    timeout: 30000
+- takeScreenshot: photo-picker
+- tapOn: .*[Pp]hoto taken.*
+- extendedWaitUntil:
+    visible: .*\.(jpg|jpeg)
+    timeout: 60000
+- takeScreenshot: image-sent

@@ -1,0 +1,189 @@
+name: Android build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - name: Type-check
+        run: npx tsc --noEmit
+      - name: Lint
+        run: npm run lint
+      - name: Jest
+        run: npm test -- --ci
+      - name: Standalone test scripts
+        run: npm run test:scripts
+
+  build-apk:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - run: npm ci
+
+      # Release build bundles the JS into the APK, so it runs without Metro.
+      # It is signed with the debug keystore (see android/app/build.gradle) – fine for testing.
+      - name: Build release APK
+        working-directory: android
+        run: ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a --no-daemon
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: chatnet-release-apk
+          path: android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
+  e2e:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: [34, 36]
+    env:
+      MAESTRO_VERSION: 2.12.1
+    steps:
+      # The emulator's userdata partition needs several GB the stock runner lacks
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/share/boost /opt/hostedtoolcache/CodeQL /usr/local/lib/node_modules/@azure
+          df -h /
+
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - run: npm ci
+
+      - name: Build x86_64 APK for the emulator
+        working-directory: android
+        run: |
+          ./gradlew assembleRelease -PreactNativeArchitectures=x86_64 --no-daemon
+          ./gradlew --stop
+          pkill -f KotlinCompileDaemon || true
+          df -h /
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install Maestro
+        run: |
+          curl -fsSL https://get.maestro.mobile.dev | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Run E2E on emulator
+        uses: ReactiveCircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          target: google_apis
+          arch: x86_64
+          cores: 4
+          ram-size: 4096M
+          disk-size: 4096M
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: bash e2e/run.sh
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: e2e-results-${{ matrix.api-level }}
+          path: e2e-output/
+          include-hidden-files: true
+          if-no-files-found: warn
+
+  e2e-two-devices:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      MAESTRO_VERSION: 2.12.1
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/share/boost /opt/hostedtoolcache/CodeQL /usr/local/lib/node_modules/@azure
+          df -h /
+
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - run: npm ci
+
+      - name: Build x86_64 APK for the emulators
+        working-directory: android
+        run: |
+          ./gradlew assembleRelease -PreactNativeArchitectures=x86_64 --no-daemon
+          ./gradlew --stop
+          pkill -f KotlinCompileDaemon || true
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install Maestro
+        run: |
+          curl -fsSL https://get.maestro.mobile.dev | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Two emulators chat with each other
+        run: bash e2e/two-devices.sh
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: e2e-two-devices
+          path: e2e-output/
+          include-hidden-files: true
+          if-no-files-found: warn

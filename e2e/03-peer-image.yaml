@@ -1,0 +1,6 @@
+appId: com.chatnet
+---
+- extendedWaitUntil:
+    visible: peer-image\.png
+    timeout: 15000
+- takeScreenshot: e2e-output/08-peer-image

@@ -1,0 +1,26 @@
+# Selects a cipher, sends a message to self, and checks it was received and decrypted.
+appId: com.chatnet
+---
+- tapOn:
+    id: settings-button
+- scrollUntilVisible:
+    element:
+      id: method-${METHOD}
+    direction: DOWN
+    timeout: 20000
+    centerElement: true
+- tapOn:
+    id: method-${METHOD}
+- tapOn:
+    id: save-settings
+- tapOn:
+    id: message-input
+- inputText: test ${METHOD} ok
+- waitForAnimationToEnd
+- tapOn:
+    id: send-button
+- extendedWaitUntil:
+    visible:
+      id: message-text-other
+      text: test ${METHOD} ok
+    timeout: 10000

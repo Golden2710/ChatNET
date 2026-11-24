@@ -1,0 +1,7 @@
+appId: com.chatnet
+---
+- extendedWaitUntil:
+    visible: .*Xin chào từ máy B.*tiếng Việt.*
+    timeout: 15000
+- assertVisible: Máy B
+- takeScreenshot: e2e-output/07-peer-text

@@ -1,0 +1,17 @@
+appId: com.chatnet
+---
+- tapOn:
+    id: settings-button
+- scrollUntilVisible:
+    element:
+      id: key-input
+    direction: DOWN
+    timeout: 20000
+    centerElement: true
+- tapOn:
+    id: key-input
+- eraseText: 20
+- inputText: ${KEY}
+- tapOn:
+    id: save-settings
+- waitForAnimationToEnd

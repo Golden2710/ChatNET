@@ -1,0 +1,13 @@
+appId: com.chatnet
+---
+- tapOn:
+    id: message-input
+- inputText: ${TEXT}
+- waitForAnimationToEnd
+- tapOn:
+    id: send-button
+- extendedWaitUntil:
+    visible:
+      id: message-text-me
+      text: ${TEXT}
+    timeout: 20000

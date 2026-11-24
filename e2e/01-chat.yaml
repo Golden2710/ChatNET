@@ -1,0 +1,80 @@
+appId: com.chatnet
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: .*ChatNET.*
+    timeout: 60000
+- assertVisible: Vui lòng cài đặt trước khi trò chuyện
+- takeScreenshot: e2e-output/01-home
+
+# Point the app at itself so messages cross the real TCP stack
+- tapOn:
+    id: settings-button
+- tapOn:
+    id: target-ip-input
+- inputText: 127.0.0.1
+- takeScreenshot: e2e-output/02-settings
+- tapOn:
+    id: save-settings
+
+- runFlow:
+    file: subflows/method.yaml
+    env: { METHOD: AES }
+- assertVisible: Bạn
+- assertVisible: ChatNET User
+# Regression: autoDeleteIn = 0 must not print a stray "0" next to the time
+- assertNotVisible: .*\d\d:\d\d.*0$
+- takeScreenshot: e2e-output/03-aes
+- runFlow:
+    file: subflows/method.yaml
+    env: { METHOD: DES }
+- runFlow:
+    file: subflows/method.yaml
+    env: { METHOD: Caesar }
+- runFlow:
+    file: subflows/method.yaml
+    env: { METHOD: RSA }
+- takeScreenshot: e2e-output/04-all-ciphers
+
+# Auto-delete removes only its own messages
+- tapOn:
+    id: settings-button
+- tapOn:
+    id: autodelete-5
+- scrollUntilVisible:
+    element:
+      id: method-AES
+    direction: DOWN
+    timeout: 20000
+    centerElement: true
+- tapOn:
+    id: method-AES
+- tapOn:
+    id: save-settings
+- tapOn:
+    id: message-input
+- inputText: tin tu huy
+- waitForAnimationToEnd
+- tapOn:
+    id: send-button
+- extendedWaitUntil:
+    visible:
+      id: message-text-other
+      text: tin tu huy
+    timeout: 4000
+- takeScreenshot: e2e-output/05-autodelete-before
+- extendedWaitUntil:
+    notVisible: tin tu huy
+    timeout: 12000
+- assertVisible: test RSA ok
+- takeScreenshot: e2e-output/06-autodelete-after
+
+- tapOn:
+    id: settings-button
+- tapOn:
+    id: autodelete-0
+- tapOn:
+    id: save-settings

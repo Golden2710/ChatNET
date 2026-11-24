@@ -1,0 +1,15 @@
+appId: com.chatnet
+---
+- tapOn:
+    id: settings-button
+- scrollUntilVisible:
+    element:
+      id: method-${METHOD}
+    direction: DOWN
+    timeout: 20000
+    centerElement: true
+- tapOn:
+    id: method-${METHOD}
+- tapOn:
+    id: save-settings
+- waitForAnimationToEnd
